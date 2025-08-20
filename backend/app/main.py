@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from mangum import Mangum
 from .routes import auth, board, post, comment, moderation
 from .config import settings
 
@@ -24,6 +25,9 @@ app.include_router(moderation.router, prefix="/api/moderation", tags=["moderatio
 @app.get("/")
 def read_root():
     return {"message": "Welcome to Carp Connect Moderation API"}
+
+# Lambda関数用ハンドラー
+handler = Mangum(app)
 
 if __name__ == "__main__":
     import uvicorn

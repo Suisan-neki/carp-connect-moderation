@@ -1,3 +1,13 @@
+terraform {
+  required_version = ">= 1.0"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
 provider "aws" {
   region = var.aws_region
 }
@@ -11,6 +21,25 @@ module "dynamodb" {
   post_table_name       = "${var.project_name}-posts"
   comment_table_name    = "${var.project_name}-comments"
   moderation_table_name = "${var.project_name}-moderation"
+  
+  tags = var.tags
+}
+
+# IAMロール
+module "iam" {
+  source = "./modules/iam"
+  
+  project_name = var.project_name
+  
+  dynamodb_table_arns = [
+    module.dynamodb.user_table_arn,
+    module.dynamodb.board_table_arn,
+    module.dynamodb.post_table_arn,
+    module.dynamodb.comment_table_arn,
+    module.dynamodb.moderation_table_arn
+  ]
+  
+  bedrock_model_id = var.bedrock_model_id
   
   tags = var.tags
 }
@@ -38,37 +67,9 @@ module "lambda" {
 module "api_gateway" {
   source = "./modules/api_gateway"
   
-  project_name      = var.project_name
-  lambda_invoke_arn = module.lambda.lambda_invoke_arn
-  
-  tags = var.tags
-}
-
-# IAMロール
-module "iam" {
-  source = "./modules/iam"
-  
-  project_name = var.project_name
-  
-  dynamodb_table_arns = [
-    module.dynamodb.user_table_arn,
-    module.dynamodb.board_table_arn,
-    module.dynamodb.post_table_arn,
-    module.dynamodb.comment_table_arn,
-    module.dynamodb.moderation_table_arn
-  ]
-  
-  bedrock_model_id = var.bedrock_model_id
-  
-  tags = var.tags
-}
-
-# Bedrockポリシー
-module "bedrock" {
-  source = "./modules/bedrock"
-  
-  project_name = var.project_name
-  model_id     = var.bedrock_model_id
+  project_name        = var.project_name
+  lambda_invoke_arn   = module.lambda.lambda_invoke_arn
+  lambda_function_name = module.lambda.lambda_function_name
   
   tags = var.tags
 }

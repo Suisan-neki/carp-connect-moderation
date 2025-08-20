@@ -1,39 +1,25 @@
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
-import Layout from '../components/common/Layout';
-import BoardList from '../components/board/BoardList';
-import { getBoardsService } from '../services/boardService';
+import React from 'react';
+import ModerationForm from '../components/moderation/ModerationForm';
 
 export default function Home() {
-  const [boards, setBoards] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const router = useRouter();
-
-  useEffect(() => {
-    async function fetchBoards() {
-      try {
-        const data = await getBoardsService();
-        setBoards(data);
-      } catch (error) {
-        console.error('Error fetching boards:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchBoards();
-  }, []);
-
   return (
-    <Layout>
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-red-600 mb-8">カープコネクト掲示板</h1>
-        {loading ? (
-          <p>Loading...</p>
-        ) : (
-          <BoardList boards={boards} />
-        )}
+    <div className="min-h-screen bg-gray-100 py-8">
+      <div className="container mx-auto px-4">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            カープコネクト
+          </h1>
+          <p className="text-xl text-gray-600">
+            AI搭載コンテンツモデレーションシステム
+          </p>
+        </div>
+        
+        <ModerationForm />
+        
+        <div className="mt-12 text-center text-gray-500">
+          <p>広島カープファンのための安全なコミュニティサイト</p>
+        </div>
       </div>
-    </Layout>
+    </div>
   );
 }
