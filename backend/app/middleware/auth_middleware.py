@@ -23,4 +23,4 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="認証に失敗しました"
-        ) 
+        )

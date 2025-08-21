@@ -39,4 +39,4 @@ class ModerationStats(BaseModel):
 
 class ModerationStatsResponse(BaseModel):
     status: str
-    data: ModerationStats 
+    data: ModerationStats
