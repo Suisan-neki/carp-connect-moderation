@@ -1,13 +1,21 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
-from ..schemas.moderation import ModerationCheck, ModerationResult, ModerationHistory
+from ..schemas.moderation import (
+    ModerationCheck,
+    ModerationResult,
+    ModerationHistory,
+    ModerationResultResponse,
+    ModerationHistoryResponse,
+    ModerationStatsResponse,
+    ModerationStats,
+)
 from ..services.moderation_service import ModerationService
 from ..middleware.auth_middleware import get_current_user
 
 router = APIRouter()
 moderation_service = ModerationService()
 
-@router.post("/check", response_model=ModerationResult)
+@router.post("/check", response_model=ModerationResultResponse)
 async def check_content(
     check_data: ModerationCheck,
     current_user = Depends(get_current_user)
@@ -24,7 +32,7 @@ async def check_content(
             detail=f"モデレーションチェック中にエラーが発生しました: {str(e)}"
         )
 
-@router.get("/history", response_model=List[ModerationHistory])
+@router.get("/history", response_model=ModerationHistoryResponse)
 async def get_moderation_history(
     current_user = Depends(get_current_user),
     limit: int = 10,
@@ -42,7 +50,7 @@ async def get_moderation_history(
             detail=f"モデレーション履歴の取得中にエラーが発生しました: {str(e)}"
         )
 
-@router.get("/stats")
+@router.get("/stats", response_model=ModerationStatsResponse)
 async def get_moderation_stats(
     current_user = Depends(get_current_user)
 ):

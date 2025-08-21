@@ -12,12 +12,21 @@ logger = logging.getLogger(__name__)
 class ModerationService:
     def __init__(self):
         self.moderation_repository = ModerationRepository()
-        self.bedrock_client = boto3.client(
-            service_name='bedrock-runtime',
-            region_name=settings.AWS_REGION,
-            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY
+        # 開発/ローカル用のモックモード判定（AWS認証情報が無い、またはDEBUGが有効）
+        self.mock_mode = (
+            settings.DEBUG
+            or not settings.AWS_ACCESS_KEY_ID
+            or not settings.AWS_SECRET_ACCESS_KEY
         )
+        if not self.mock_mode:
+            self.bedrock_client = boto3.client(
+                service_name='bedrock-runtime',
+                region_name=settings.AWS_REGION,
+                aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY
+            )
+        else:
+            self.bedrock_client = None
         self.model_id = settings.BEDROCK_MODEL_ID
 
     async def check_content(self, content: str, content_type: str) -> Dict[str, Any]:
@@ -27,7 +36,7 @@ class ModerationService:
         try:
             # LLMにプロンプトを送信
             prompt = self._create_moderation_prompt(content)
-            response = self._invoke_llm(prompt)
+            response = self._invoke_llm(prompt, content)
             
             # レスポンスを解析
             moderation_result = self._parse_llm_response(response)
@@ -103,9 +112,9 @@ class ModerationService:
         - 個人情報の漏洩
 
         コンテンツ：
-        \"\"\"
+        """
         {content}
-        \"\"\"
+        """
 
         以下の形式でJSON形式で回答してください：
         {{
@@ -115,11 +124,23 @@ class ModerationService:
         }}
         """
 
-    def _invoke_llm(self, prompt: str) -> str:
+    def _invoke_llm(self, prompt: str, content: str) -> str:
         """
-        AWS Bedrock経由でLLMを呼び出します。
+        AWS Bedrock経由でLLMを呼び出します。モックモードではローカルで擬似結果を返します。
         """
         try:
+            if self.mock_mode:
+                lowered = (content or "").lower()
+                is_rejected = any(kw in lowered for kw in [
+                    "violence", "hate", "discrimination", "spam", "harassment"
+                ])
+                mock = {
+                    "result": "rejected" if is_rejected else "approved",
+                    "reason": "開発モード（モック）で自動判定しました",
+                    "score": 0.3 if is_rejected else 0.9,
+                }
+                return json.dumps(mock)
+
             body = json.dumps({
                 "prompt": prompt,
                 "max_tokens_to_sample": 500,

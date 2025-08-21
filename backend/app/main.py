@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
-from .routes import auth, board, post, comment, moderation
+from .routes import moderation
 from .config import settings
 
 app = FastAPI(title="Carp Connect Moderation API")
@@ -16,10 +16,6 @@ app.add_middleware(
 )
 
 # ルーターの登録
-app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
-app.include_router(board.router, prefix="/api/boards", tags=["boards"])
-app.include_router(post.router, prefix="/api/posts", tags=["posts"])
-app.include_router(comment.router, prefix="/api/comments", tags=["comments"])
 app.include_router(moderation.router, prefix="/api/moderation", tags=["moderation"])
 
 @app.get("/")
